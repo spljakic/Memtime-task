@@ -1,4 +1,4 @@
-# Memtime Integration Workspace — Version 2
+# Memtime Integration Workspace 
 
 **Windows quick start:** open this project folder and double-click `Install-and-Run.cmd`. See `START_HERE.txt`. This package pins the public registry locally to avoid inheriting an unreachable internal Nexus registry.
 
