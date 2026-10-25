@@ -1,50 +1,135 @@
-# Memtime Integration Workspace 
+# Memtime Integration Workspace
 
-**Windows quick start:** open this project folder and double-click `Install-and-Run.cmd`. See `START_HERE.txt`. This package pins the public registry locally to avoid inheriting an unreachable internal Nexus registry.
+A take-home implementation for the **Senior JavaScript Engineer - Integrations Team** position.
 
-A focused take-home implementation for browsing clients, projects and tasks, reviewing recorded time, and creating or updating entries.
+The application supports browsing clients, projects and tasks, reviewing recorded time, and creating or updating time entries through the supplied Memtime API.
 
-## Run locally
+## Requirements
 
-Use Node.js 24 LTS (minimum 22.15) and npm. Node 20.18 is not supported. The lockfile records the installed dependency versions.
+- Node.js **22.15 or newer**; Node.js 24 LTS recommended.
+- npm.
+- The supplied API key for live mode. Demo mode runs without credentials.
+
+## Getting started
+
+Open a terminal in the directory containing `package.json`:
 
 ```bash
 npm ci
 npm run dev
 ```
 
-On first run, a demo `.env` is created automatically if no `.env` exists. Existing configuration is never overwritten.
+Open **http://localhost:5173**.
 
-Open **http://localhost:5173**. The API runs on port 3001. Demo mode is enabled by default; its records are isolated and reset when the API restarts. The demo contains three clients, four projects, nested tasks, and 64 entries so pagination and filtering can be exercised immediately.
+The backend runs on port **3001**. On first startup, the application creates a demo `.env` file if none exists. Existing configuration is never overwritten.
 
-For the production build:
-
-```bash
-npm run build
-npm start
-```
-
-Open **http://localhost:3001**. This is a local review server, not a public multi-user deployment.
-
-## Connect to the supplied API
-
-Copy `.env.example` to `.env`, set `DEMO_MODE=false`, and add the supplied Bearer key as `MEMTIME_API_KEY`. Restart the API process. The UI badge changes to LIVE API.
-
-On Windows PowerShell:
+On Windows, you can alternatively run:
 
 ```powershell
-Copy-Item .env.example .env
+.\Install-and-Run.cmd
 ```
 
-On macOS/Linux:
+The script installs dependencies from the public npm registry and starts the application only if installation succeeds.
 
-```bash
-cp .env.example .env
+## Demo and live modes
+
+### Demo mode
+
+Demo mode includes three clients, four projects, nested tasks and 64 time entries.
+
+Changes are stored in memory and reset when the backend restarts. Demo requests do not consume the external API allowance.
+
+### Live mode
+
+Edit `.env`:
+
+```dotenv
+DEMO_MODE=false
+MEMTIME_API_KEY=<provided-interview-key>
+PORT=3001
+HOST=127.0.0.1
 ```
 
-The key is deliberately absent from source and examples. It belongs only in the server environment. Do not place it in a `VITE_` variable, commit `.env`, or embed it in screenshots. Live mode refuses to start without the key. The upstream URL is fixed to the supplied API host; this backend cannot proxy arbitrary URLs.
+Restart the application and confirm that the header displays **LIVE API**.
 
-## Verify
+The API key stays on the backend. It must not be committed to Git or placed in a frontend environment variable.
+
+## Features
+
+### Clients, projects and tasks
+
+- Expandable client → project → task hierarchy.
+- Projects and tasks load when their parent branch opens.
+- Pagination through “Load more”.
+- Previously loaded branches remain available.
+- Branch-level loading, empty and error states.
+- Nested-task handling with missing-parent and cycle protection.
+
+### Time entries
+
+- Required columns: **ID, Task ID, Comment, Start, End and Created At**.
+- Additional duration column.
+- Pagination with page sizes of 10, 20 or 50.
+- Task-specific entry views.
+- Explicit refresh.
+- Duration summaries scoped to the displayed page.
+
+The API does not document task filtering. Task-specific views therefore retrieve entries progressively and clearly indicate when results are incomplete.
+
+### Create and update
+
+- Shared form for POST and PUT operations.
+- Task selection using loaded client/project/task context.
+- Direct task ID input.
+- Required-field and time-interval validation.
+- Local-time display and ISO timestamp submission.
+- Overnight entries and daylight-saving ambiguity handling.
+- Preservation of unchanged timestamp precision.
+- Disabled submission while saving.
+- Preserved drafts after failures.
+- Success confirmation with the returned entry ID.
+- “Edit saved entry” and “Add another entry” actions.
+
+## Technology stack
+
+| Area | Technology |
+|---|---|
+| Frontend | React, TypeScript, Vite |
+| Server state | TanStack Query |
+| Backend | Node.js, Express |
+| HTTP transport | Native fetch |
+| Runtime validation | Zod |
+| Styling | Plain CSS |
+| Testing | Vitest, React Testing Library, Playwright |
+
+## Architecture
+
+The browser communicates with a small Node.js backend, which calls the Memtime API.
+
+The backend owns:
+
+- Bearer authentication.
+- Upstream timeouts.
+- Request and response validation.
+- Read caching and request deduplication.
+- Rate-limit coordination.
+- Safe error responses.
+
+The external API remains the source of truth. No additional database or authentication system is introduced.
+
+## Request management
+
+The external API permits **15 requests per 60 seconds per API key**.
+
+The application limits unnecessary traffic through lazy loading, short-lived caching and deduplication of identical in-flight reads. Explicit refresh bypasses the relevant read cache while respecting the request budget.
+
+Automatic retries are disabled. A mutation timeout may occur after the external service has saved the entry, so an uncertain outcome requires verification before resubmission.
+
+The limiter operates within one backend process. It does not coordinate other applications using the same key or multiple server instances.
+
+## Testing
+
+Run the automated checks:
 
 ```bash
 npm run typecheck
@@ -53,55 +138,82 @@ npm run build
 npm run format:check
 ```
 
-Browser workflow tests run against isolated demo data:
+Install Chromium and run browser tests:
 
 ```bash
 npx playwright install chromium
 npm run test:e2e
 ```
 
-If Chromium is already installed in a nonstandard location, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` before running browser tests. On restricted Linux containers, `PLAYWRIGHT_NO_SANDBOX=true` enables the explicit container-only launch flags.
+Stop any existing application on port 3001 before running browser tests.
 
-## Features
+The recorded verification baseline includes **50 automated tests and three browser tests passing**. Tests cover API contracts, authentication, sanitization, pagination, request controls, date conversion, hierarchy handling, form recovery and complete user workflows.
 
-- Lazy client/project expansion with pagination, branch-level errors, retry, empty states, and cached reopening.
-- Nested task rendering with missing-parent and cyclic-reference handling. Task parent semantics are a documented assumption.
-- Time-entry table with all six required columns, page-size selection, Previous/Next, and refresh.
-- Task selection opens a task-specific view and supplies the new-entry form's task ID.
-- Task-specific filtering scans the documented entry endpoint incrementally. It explicitly labels incomplete results and paginates accumulated matches locally.
-- A contextual loaded-task picker, duration column, page-scoped summaries and saved-entry actions.
-- Explicit Refresh bypasses server read cache while preserving limiter/deduplication.
-- One create/edit editor, local-time inputs, duration preview, overnight intervals, and explicit offset selection during repeated daylight-saving hours.
-- Unchanged timestamps retain their original seconds and milliseconds when editing a comment.
-- Duplicate submission protection, preserved drafts, discard confirmation, resource/validation errors, and unknown-save recovery.
-- Success feedback contains the returned entry ID and comment. Saving and list-refresh failures are reported separately.
+## Production frontend build
 
-## Structure
+```bash
+npm run build
+npm start
+```
 
-- `client/features/Hierarchy.tsx`: browsing and lazy queries.
-- `client/features/taskForest.ts`: hierarchy transformation independent of rendering.
-- `client/features/TimeEntries.tsx`: server pagination and progressive task scanning.
-- `client/features/EntryEditor.tsx`: form state, validation, submission, recovery.
-- `client/dateTime.ts`: local wall-time conversion, DST ambiguity detection.
-- `server/app.ts`: allowlisted HTTP routes, request validation, safe error responses.
-- `server/memtimeClient.ts`: transport, authentication, bounded read cache, deduplication, adapters, cache invalidation.
-- `server/rateLimiter.ts`: rolling upstream request budget and shared cooldown.
-- `server/demo.ts`: isolated in-memory demo provider using the same application boundary.
-- `shared/contracts.ts`: runtime schemas and inferred TypeScript contracts.
-- `tests/`: domain, HTTP, integration-boundary, React, and browser workflow checks.
+Open **http://localhost:3001**.
 
-The styling uses one small plain CSS stylesheet rather than introducing a component library. No assets, fonts, analytics, or scripts are fetched from third-party CDNs.
+This serves the built frontend and API locally. Public deployment requires an access boundary, HTTPS and appropriate shared request coordination.
 
-## Decisions and limitations
+## Project structure
 
-See [requirement coverage](docs/REQUIREMENTS.md), [version 2 changes](docs/CHANGES_V2.md), [technical analysis](docs/TECHNICAL_ANALYSIS.md), [API boundary](docs/API.md), [implementation milestones](docs/IMPLEMENTATION_PLAN.md), and [verification record](docs/VERIFICATION.md).
+```text
+client/
+  features/       Hierarchy, entry list, editor and task picker
+  api.ts          Browser API client
+  dateTime.ts     Date conversion and DST handling
+  entrySummary.ts Duration calculations
+  taskOptions.ts  Context from loaded hierarchy data
 
-The application has no database or new authentication system. The external API owns persistence and identity. The in-memory request budget coordinates one process only; external key usage and restarts remain outside its control. Public hosting requires an access boundary and a fixed trusted origin. An Origin check alone is not authentication.
+server/
+  app.ts          HTTP routes and validation
+  memtimeClient.ts External API integration and caching
+  rateLimiter.ts  Request budget and cooldown
+  demo.ts         Isolated demo provider
+  index.ts        Configuration and startup
 
-Automatic retries are disabled, including mutations. An uncertain save requires verification before another submission. The API documents no idempotency, update version, task filter, or pagination snapshot token.
+shared/
+  contracts.ts    Runtime schemas and TypeScript contracts
 
-No deployment or repository publication is performed by this project. Review the implementation, configure the key locally, and verify live integration before submitting.
+tests/
+  browser/        End-to-end workflows
+  *.test.ts       Domain and integration tests
+  *.test.tsx      React component tests
 
-## Opening the download
+scripts/
+  check-node.mjs  Runtime version check
+  setup.mjs       Initial demo configuration
+```
 
-Extract the ZIP into a new directory. Open the `memtime-project` folder inside the extracted directory. That folder contains `package.json` and `package-lock.json`. Open a terminal there, run `npm.cmd ci --registry=https://registry.npmjs.org/ --include=dev --no-audit --no-fund`, then `npm run dev`. Do not overwrite your previous project or copy its `node_modules`. Transfer your existing `.env` only if you want to reuse your local live configuration.
+## Assumptions and limitations
+
+- Missing, zero or null task parents are treated as roots.
+- A full collection page indicates that another page may exist; no total count is assumed.
+- Task-specific results remain partial until the progressive scan completes.
+- Offset pagination does not provide a consistent snapshot when records change.
+- Entries require an end time after their start.
+- The API documents no idempotency key or update version check. Exactly-once creation and concurrent-edit protection cannot be guaranteed.
+- Drafts remain in memory rather than persistent offline storage.
+- Authenticated live reads were checked. **Live create/update acceptance and the complete live browser workflow remain outstanding.**
+- The SVG brand mark is redrawn from a supplied reference and is not an official downloaded asset.
+
+## Installation troubleshooting
+
+If npm inherits an unavailable private registry, install using an explicit public registry:
+
+```bash
+npm ci --registry=https://registry.npmjs.org/ --include=dev --no-audit --no-fund --fetch-retries=0 --fetch-timeout=30000
+```
+
+Do not start the application after a failed installation. Missing commands such as `concurrently` indicate that dependencies may not have installed successfully.
+
+Keep `package-lock.json` to preserve reproducible dependency versions.
+
+## Author
+
+Šejla Pljakić
