@@ -92,15 +92,15 @@ The API does not document task filtering. Task-specific views therefore retrieve
 
 ## Technology stack
 
-| Area | Technology |
-|---|---|
-| Frontend | React, TypeScript, Vite |
-| Server state | TanStack Query |
-| Backend | Node.js, Express |
-| HTTP transport | Native fetch |
-| Runtime validation | Zod |
-| Styling | Plain CSS |
-| Testing | Vitest, React Testing Library, Playwright |
+| Area               | Technology                                |
+| ------------------ | ----------------------------------------- |
+| Frontend           | React, TypeScript, Vite                   |
+| Server state       | TanStack Query                            |
+| Backend            | Node.js, Express                          |
+| HTTP transport     | Native fetch                              |
+| Runtime validation | Zod                                       |
+| Styling            | Plain CSS                                 |
+| Testing            | Vitest, React Testing Library, Playwright |
 
 ## Architecture
 
