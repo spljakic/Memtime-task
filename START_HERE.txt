@@ -1,0 +1,36 @@
+MEMTIME — START HERE (WINDOWS)
+
+1. Stop the old installation with Ctrl+C and close any old development servers.
+2. Extract this ZIP into a NEW directory. Do not merge it with an old installation.
+3. Open the memtime-project folder inside the extracted directory.
+4. Double-click Install-and-Run.cmd.
+5. Wait for installation to finish, then open http://localhost:5173.
+
+Node.js 22.15 or newer is required. Your Node.js 24.12.0 is supported.
+
+The script installs packages from https://registry.npmjs.org/ using an explicit
+per-command option, then starts the application only if installation succeeds.
+No global npm configuration is changed. Existing .env configuration is not
+replaced. A fresh copy starts in demo mode without an API key.
+
+POWERSHELL ALTERNATIVE
+Open PowerShell in the memtime-project folder and run:
+
+npm.cmd ci --registry=https://registry.npmjs.org/ --include=dev --no-audit --no-fund --fetch-retries=0 --fetch-timeout=30000
+
+Only after that command succeeds:
+
+npm.cmd run dev
+
+REGISTRY DIAGNOSIS
+The old log showed ENOTFOUND for nexus.zira. That means installation was trying
+to reach an internal ZIRA registry that could not be resolved. This download
+contains only public npm package URLs, a project-local registry setting, and
+a Windows installer with an explicit public-registry argument.
+
+A proxy, corporate certificate, firewall or environment setting may still block
+public access. If the error changes, save its exact message. Do not disable TLS
+verification, delete package-lock.json, or change corporate project settings.
+
+The dependency versions and all V2 application features are preserved.
+See README.md and docs for functionality and verification details.
