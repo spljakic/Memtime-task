@@ -66,10 +66,6 @@ Tests cover rate-window expiry, upstream cooldown, read deduplication, credentia
 
 Before live submission, validate supplied credentials and contracts from a network that can reach the external service. Higher-value future API improvements are task filtering, cursor pagination, idempotency keys and optimistic concurrency. These address real limitations before more infrastructure is added.
 
-## Version 2 product refinements
-
-The form can search loaded task context without additional API calls. Entry duration is derived from existing timestamps, and summary totals are explicitly scoped to the current page. Saved-entry actions use the returned record, avoiding a lookup just to reopen it. See CHANGES_V2.md and REQUIREMENTS.md for exact scope and evidence.
-
 ## Observed API behaviour (24 October)
 
 A limited authenticated read smoke check returned 200 arrays for the four required collection endpoints. The observed task did not include parent; the adapter defaults absence to root. This confirms read contracts only. Live POST/PUT and full live-browser acceptance remain separate checks.
