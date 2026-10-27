@@ -1,13 +1,13 @@
 import { z } from 'zod';
-export const entitySchema = z.object({ id: z.number().int().positive(), name: z.string() });
+export const entitySchema = z.object({ id: z.number().int().nonnegative(), name: z.string() });
 export const clientSchema = entitySchema;
-export const projectSchema = entitySchema.extend({ clientId: z.number().int().positive() });
+export const projectSchema = entitySchema.extend({ clientId: z.number().int().nonnegative() });
 export const taskSchema = entitySchema.extend({
   parent: z.number().int().nonnegative().nullable().default(0),
 });
 export const entrySchema = z.object({
-  id: z.number().int().positive(),
-  taskId: z.number().int().positive(),
+  id: z.number().int().nonnegative(),
+  taskId: z.number().int().nonnegative(),
   comment: z.string(),
   start: z.iso.datetime({ offset: true }),
   end: z.iso.datetime({ offset: true }),
